@@ -20,7 +20,7 @@ module.exports = {
                 `ɪꜰ ʏᴏᴜ ɴᴇᴇᴅ ʜᴇʟᴘ, ᴛʏᴘᴇ ${prefix}ᴍᴇɴᴜ`
             );
 
-            const audioUrl = 'https://files.catbox.moe/tcz5xk.mp3';
+            const audioUrl = 'https://files.catbox.moe/bo5yvg.mp3';
 
             const response = await axios.get(audioUrl, {
                 responseType: 'arraybuffer'
