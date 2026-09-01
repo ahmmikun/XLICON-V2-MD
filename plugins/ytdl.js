@@ -35,30 +35,28 @@ module.exports = {
             }
 
             const apiUrl =
-                `https://api-abztech.zone.id/download/ytdlvip?url=${encodeURIComponent(finalUrl)}&format=mp3`;
+                `https://api-abztech.zone.id/download/ytmp3?url=${encodeURIComponent(finalUrl)}`;
 
             const apiRes = await fetch(apiUrl);
             const data = await apiRes.json();
 
-            if (!apiRes.ok || !data?.status || !data?.data?.download_url) {
+            if (!apiRes.ok || !data?.status || !data?.download?.downloadUrl) {
                 return m.reply(
-                    `API Error: ${data?.message || "Failed to get download URL."}`
+                    `API Error: ${data?.message || "Failed to get audio URL."}`
                 );
             }
 
             const title =
-                data.data.title ||
+                data.download.title ||
                 searchInfo?.title ||
                 "YouTube Audio";
 
-            const downloadUrl = data.data.download_url;
+            const downloadUrl = data.download.downloadUrl;
 
             const audioRes = await fetch(downloadUrl);
 
             if (!audioRes.ok) {
-                throw new Error(
-                    `Download failed: HTTP ${audioRes.status}`
-                );
+                throw new Error(`Audio download failed: HTTP ${audioRes.status}`);
             }
 
             const arrayBuffer = await audioRes.arrayBuffer();
@@ -102,7 +100,7 @@ module.exports = {
 
         } catch (err) {
             console.error(
-                "YTMP3 error:",
+                'YTMP3 error:',
                 err.response?.data || err.message
             );
 
