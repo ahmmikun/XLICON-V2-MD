@@ -62,10 +62,10 @@ NOW Deploy👇
 4. Then upload script zip file to pannel
 5. Unarchieve zip sile
 6. Open bot folder and move all filea to container by (../)
-7. Now run bot
-8. After 1-2min it show you QR to scan
-9. Scan The QR in Whatsapp Link Device
-10. Bot Connected done now use bot 
+7. Scan The QR in Whatsapp Link Device using session id link in repo
+8. We repeat Scan The QR in Whatsapp Link Device
+9. Put Your Session in config SESSION_ID = "HERE"
+10. Deploy Bot Connected done now use bot 
  
 ```
 
