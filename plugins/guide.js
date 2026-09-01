@@ -68,8 +68,8 @@ Below is everything you need to know.
   → Reply to an image to extract text
 
 > *Text to Speech*
-  ${prefix}tts <text>
-  Example: ${prefix}tts Hello world
+  ${prefix}tts [lang] <text>
+  Example: ${prefix}tts Hello world or ${prefix}tts id Halo dunia
 
 > *Text Effects (13 styles)*
   ${prefix}textpro <style> | <text>
