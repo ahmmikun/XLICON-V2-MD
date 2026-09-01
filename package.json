@@ -29,6 +29,7 @@
     "express": "*",
     "file-type": "^22.0.1",
     "gifted-btns": "^1.0.0",
+    "google-tts-api": "^2.0.2",
     "jimp": "^1.6.1",
     "node-fetch": "^2.7.0",
     "node-webpmux": "^3.2.1",

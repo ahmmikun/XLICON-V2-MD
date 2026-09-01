@@ -1,5 +1,49 @@
 const axios = require('axios');
 const fetch = require('node-fetch');
+const googleTTS = require('google-tts-api');
+
+async function getTTSBuffer(text, lang = 'en') {
+  try {
+    const audioChunks = await googleTTS.getAllAudioBase64(text, {
+      lang: lang,
+      slow: false,
+      timeout: 10000,
+      splitPunct: ',.?!'
+    });
+    if (audioChunks && audioChunks.length > 0) {
+      return Buffer.concat(audioChunks.map(chunk => Buffer.from(chunk.base64, 'base64')));
+    }
+  } catch (e) {
+    // try direct Google endpoint
+  }
+
+  try {
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text.slice(0, 200))}&tl=${encodeURIComponent(lang)}&client=tw-ob`;
+    const res = await axios.get(url, {
+      responseType: 'arraybuffer',
+      timeout: 10000,
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    if (res.data) return Buffer.from(res.data);
+  } catch (e) {
+    // try worker
+  }
+
+  try {
+    const ttsResponse = await fetch(
+      `https://ab-text-voice.abrahamdw882.workers.dev/?q=${encodeURIComponent(text)}&voicename=jane`
+    );
+    const ttsData = await ttsResponse.json();
+    const audioRes = await axios.get(ttsData.url, {
+      responseType: "arraybuffer",
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      timeout: 15000
+    });
+    return Buffer.from(audioRes.data);
+  } catch (e) {
+    throw new Error('All TTS generation failed');
+  }
+}
 
 module.exports = {
   name: 'aivoice',
@@ -20,22 +64,8 @@ module.exports = {
 
       if (userQuery.toLowerCase() === 'hi' || userQuery.toLowerCase() === 'hello') {
 
-        const greeting = "ʜᴇʟʟᴏ! ɪ'ᴍ ʏᴏᴜʀ ᴀɪ ᴠᴏɪᴄᴇ ᴀssɪsᴛᴀɴᴛ. ʜᴏᴡ ᴄᴀɴ ɪ ʜᴇʟᴘ ʏᴏᴜ ᴛᴏᴅᴀʏ?";
-
-        const ttsResponse = await fetch(
-          `https://ab-text-voice.abrahamdw882.workers.dev/?q=${encodeURIComponent(greeting)}&voicename=jane`
-        );
-
-        const ttsData = await ttsResponse.json();
-
-        const audioRes = await axios.get(ttsData.url, {
-          responseType: "arraybuffer",
-          headers: {
-            'User-Agent': 'Mozilla/5.0'
-          }
-        });
-
-        const buffer = Buffer.from(audioRes.data);
+        const greeting = "Hello! I am your AI voice assistant. How can I help you today?";
+        const buffer = await getTTSBuffer(greeting, 'en');
 
         const quotedMsg = m.quoted || {
           key: {
@@ -129,22 +159,7 @@ STRICT RULES:
         answer = "ɪ ᴄᴏᴜʟᴅɴ'ᴛ ꜰɪɴᴅ ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ ᴀʙᴏᴜᴛ ᴛʜᴀᴛ. ᴘʟᴇᴀsᴇ ᴛʀʏ ᴀɴᴏᴛʜᴇʀ ǫᴜᴇsᴛɪᴏɴ.";
       }
 
-      const ttsResponse = await fetch(
-        `https://ab-text-voice.abrahamdw882.workers.dev/?q=${encodeURIComponent(answer)}&voicename=jane`
-      );
-
-      const ttsData = await ttsResponse.json();
-
-      const audioRes = await axios.get(ttsData.url, {
-        responseType: "arraybuffer",
-        headers: {
-          'User-Agent': 'Mozilla/5.0',
-          'Accept': 'audio/mpeg'
-        },
-        timeout: 30000
-      });
-
-      const buffer = Buffer.from(audioRes.data);
+      const buffer = await getTTSBuffer(answer, 'en');
 
       const quotedMsg = m.quoted || {
         key: {
