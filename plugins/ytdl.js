@@ -1,4 +1,3 @@
-const axios = require('axios');
 const yts = require('yt-search');
 
 module.exports = {
@@ -22,32 +21,57 @@ module.exports = {
             });
 
             let finalUrl = input;
+            let searchInfo = null;
 
             if (!input.includes("youtube.com") && !input.includes("youtu.be")) {
                 const results = await yts(input);
 
-                if (!results || !results.videos || results.videos.length === 0) {
+                if (!results?.videos?.length) {
                     return m.reply("No results found on YouTube.");
                 }
 
-                finalUrl = results.videos[0].url;
+                searchInfo = results.videos[0];
+                finalUrl = searchInfo.url;
             }
 
-            const apiUrl = `https://eliteprotech-apis.zone.id/convert?url=${encodeURIComponent(finalUrl)}&format=mp3`;
-            const apiRes = await axios.get(apiUrl);
-            const data = apiRes.data;
+            const apiUrl =
+                `https://api-abztech.zone.id/download/ytdlvip?url=${encodeURIComponent(finalUrl)}&format=mp3`;
 
-            if (!data || !data.success) {
-                return m.reply(`API Error: ${data?.message || "Unknown error"}`);
+            const apiRes = await fetch(apiUrl);
+            const data = await apiRes.json();
+
+            if (!apiRes.ok || !data?.status || !data?.data?.download_url) {
+                return m.reply(
+                    `API Error: ${data?.message || "Failed to get download URL."}`
+                );
             }
 
-            const { downloadURL, title } = data;
+            const title =
+                data.data.title ||
+                searchInfo?.title ||
+                "YouTube Audio";
 
-            const audioRes = await axios.get(downloadURL, {
-                responseType: "arraybuffer"
-            });
+            const downloadUrl = data.data.download_url;
 
-            const buffer = Buffer.from(audioRes.data);
+            const audioRes = await fetch(downloadUrl);
+
+            if (!audioRes.ok) {
+                throw new Error(
+                    `Download failed: HTTP ${audioRes.status}`
+                );
+            }
+
+            const arrayBuffer = await audioRes.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+
+            if (!buffer.length) {
+                throw new Error("Downloaded audio is empty");
+            }
+
+            const safeName = title
+                .replace(/[\\/:*?"<>|]/g, "")
+                .trim()
+                .slice(0, 100) || "audio";
 
             const quotedMsg = m.quoted || {
                 key: {
@@ -63,8 +87,6 @@ module.exports = {
                 }
             };
 
-            const safeName = (title || "audio").replace(/[\\/:*?"<>|]/g, "");
-
             await sock.sendMessage(
                 chatId,
                 {
@@ -73,12 +95,20 @@ module.exports = {
                     fileName: `${safeName}.mp3`,
                     ptt: false
                 },
-                { quoted: quotedMsg }
+                {
+                    quoted: quotedMsg
+                }
             );
 
         } catch (err) {
-            console.error('YTMP3 error:', err.response?.data || err.message);
-            m.reply('Failed to process request.');
+            console.error(
+                "YTMP3 error:",
+                err.response?.data || err.message
+            );
+
+            await m.reply(
+                `❌ Failed to process request.\n\n${err.message || "Unknown error"}`
+            );
         }
     }
 };
