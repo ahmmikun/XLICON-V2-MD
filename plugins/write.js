@@ -98,6 +98,91 @@ Target="word/document.xml"/>
     return createZip(files);
 }
 
+function escapePdfText(text) {
+    return text
+        .replace(/\\/g, '\\\\')
+        .replace(/\(/g, '\\(')
+        .replace(/\)/g, '\\)');
+}
+
+function createPdf(text) {
+    const lines = text.split(/\r?\n/);
+    const objects = [];
+
+    objects.push(
+        '<< /Type /Catalog /Pages 2 0 R >>'
+    );
+
+    objects.push(
+        '<< /Type /Pages /Kids [3 0 R] /Count 1 >>'
+    );
+
+    objects.push(
+        '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>'
+    );
+
+    const content = [];
+
+    content.push('BT');
+    content.push('/F1 12 Tf');
+    content.push('50 800 Td');
+
+    let firstLine = true;
+
+    for (const line of lines) {
+        const safeLine = escapePdfText(line);
+
+        if (!firstLine) {
+            content.push('0 -18 Td');
+        }
+
+        content.push(`(${safeLine}) Tj`);
+
+        firstLine = false;
+    }
+
+    content.push('ET');
+
+    const stream = content.join('\n');
+
+    objects.push(
+        `<< /Length ${Buffer.byteLength(stream, 'utf8')} >>\nstream\n${stream}\nendstream`
+    );
+
+    objects.push(
+        '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'
+    );
+
+    let pdf = '%PDF-1.4\n';
+    const offsets = [0];
+
+    for (let i = 0; i < objects.length; i++) {
+        offsets.push(Buffer.byteLength(pdf, 'utf8'));
+
+        pdf += `${i + 1} 0 obj\n`;
+        pdf += `${objects[i]}\n`;
+        pdf += 'endobj\n';
+    }
+
+    const xrefOffset = Buffer.byteLength(pdf, 'utf8');
+
+    pdf += `xref\n`;
+    pdf += `0 ${objects.length + 1}\n`;
+    pdf += `0000000000 65535 f \n`;
+
+    for (let i = 1; i < offsets.length; i++) {
+        pdf += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+    }
+
+    pdf += `trailer\n`;
+    pdf += `<< /Size ${objects.length + 1} /Root 1 0 R >>\n`;
+    pdf += `startxref\n`;
+    pdf += `${xrefOffset}\n`;
+    pdf += `%%EOF`;
+
+    return Buffer.from(pdf, 'utf8');
+}
+
 module.exports = {
     name: 'write',
     aliases: ['w'],
@@ -105,15 +190,17 @@ module.exports = {
     async execute(sock, m, args) {
         if (args.length < 2) {
             return m.reply(
-                `ᴜsᴀɢᴇ:\n\n.write hi txt\n.write hi docx`
+                `ᴜsᴀɢᴇ:\n\n.write txt hi\n.write docx hi\n.write pdf hi`
             );
         }
 
-        const format = args[args.length - 1].toLowerCase();
-        const text = args.slice(0, -1).join(' ').trim();
+        const format = args[0].toLowerCase();
+        const text = args.slice(1).join(' ').trim();
 
         if (!text) {
-            return m.reply(`ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ sᴏᴍᴇ ᴛᴇxᴛ.`);
+            return m.reply(
+                'ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ sᴏᴍᴇ ᴛᴇxᴛ.'
+            );
         }
 
         try {
@@ -141,13 +228,28 @@ module.exports = {
                 return;
             }
 
+            if (format === 'pdf') {
+                const buffer = createPdf(text);
+
+                await sock.sendMessage(m.from, {
+                    document: buffer,
+                    mimetype: 'application/pdf',
+                    fileName: 'document.pdf'
+                });
+
+                return;
+            }
+
             await m.reply(
-                `ғᴏʀᴍᴀᴛ ɴᴏᴛ sᴜᴘᴘᴏʀᴛᴇᴅ\n\nᴜsᴇ: ᴛxᴛ ᴏʀ ᴅᴏᴄx`
+                `ғᴏʀᴍᴀᴛ ɴᴏᴛ sᴜᴘᴘᴏʀᴛᴇᴅ\n\nᴜsᴇ: ᴛxᴛ, ᴅᴏᴄx ᴏʀ ᴘᴅꜰ`
             );
 
         } catch (err) {
             console.error('write error:', err);
-            await m.reply(`ғᴀɪʟᴇᴅ\n\n${err.message}`);
+
+            await m.reply(
+                `ғᴀɪʟᴇᴅ\n\n${err.message}`
+            );
         }
     }
 };

@@ -7,129 +7,206 @@ module.exports = {
     async execute(sock, m, args) {
         try {
             if (!m.isGroup) {
-                return m.reply('ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs.');
+                return await m.reply(
+                    'ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs.'
+                );
             }
 
-            const groupMetadata = await sock.groupMetadata(m.from);
-            
-            const senderId = m.sender;
-            const senderBaseId = senderId.split(':')[0] + '@s.whatsapp.net';
-            console.log('Sender ID (full):', senderId);
-            console.log('Sender ID (base):', senderBaseId);
-        
-            const isAdmin = groupMetadata.participants.some(p => 
-                (p.id === senderId || p.id === senderBaseId || p.phoneNumber === senderId || p.phoneNumber === senderBaseId) && p.admin === 'admin'
-            );
-            
-            console.log('Is admin:', isAdmin);
-            
-            if (!isAdmin) {
-                return m.reply('ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ.');
+            if (!m.isAdmin && !m.isOwner) {
+                return await m.reply(
+                    'ᴏɴʟʏ ᴀᴅᴍɪɴs ᴏʀ ᴏᴡɴᴇʀs ᴄᴀɴ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ.'
+                );
             }
-            
-            let targetPhoneNumber;
-            let targetLid;
-            
-            if (m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length > 0) {
-                targetLid = m.message.extendedTextMessage.contextInfo.mentionedJid[0];
-                
-                const participant = groupMetadata.participants.find(p => p.id === targetLid);
-                if (participant) {
-                    targetPhoneNumber = participant.phoneNumber;
+
+            const groupMetadata = m.groupMetadata;
+
+            const participants = Array.isArray(groupMetadata?.participants)
+                ? groupMetadata.participants
+                : [];
+
+            if (!participants.length) {
+                return await m.reply(
+                    'ᴄᴏᴜʟᴅ ɴᴏᴛ ғɪɴᴅ ɢʀᴏᴜᴘ ᴘᴀʀᴛɪᴄɪᴘᴀɴᴛs.'
+                );
+            }
+
+            let targetJid = null;
+            let targetParticipant = null;
+
+            const mentionedJid =
+                m.message?.extendedTextMessage?.contextInfo?.mentionedJid;
+
+            if (mentionedJid?.length) {
+                const mentioned = mentionedJid[0];
+
+                targetParticipant = participants.find(
+                    p => p.id === mentioned || p.phoneNumber === mentioned
+                );
+
+                if (targetParticipant) {
+                    targetJid =
+                        targetParticipant.phoneNumber ||
+                        targetParticipant.id;
                 }
-            }
-            else if (m.quoted) {
+            } else if (m.quoted) {
                 const quotedSender = m.quoted.sender;
-                targetPhoneNumber = quotedSender.includes(':') ? 
-                    quotedSender.split(':')[0] + '@s.whatsapp.net' : 
-                    quotedSender;
-            }
-            else if (args[0]) {
-                const input = args[0].replace('@', '');
-                
-                if (input.length > 12 && !isNaN(input)) {
-                    const participant = groupMetadata.participants.find(p => 
-                        p.id.split('@')[0] === input
-                    );
-                    
-                    if (participant) {
-                        targetLid = participant.id;
-                        targetPhoneNumber = participant.phoneNumber;
-                    }
+
+                targetParticipant = participants.find(
+                    p =>
+                        p.id === quotedSender ||
+                        p.phoneNumber === quotedSender
+                );
+
+                if (targetParticipant) {
+                    targetJid =
+                        targetParticipant.phoneNumber ||
+                        targetParticipant.id;
                 } else {
-                    let cleanNumber = input.replace(/[^0-9]/g, '');
-                    
+                    targetJid = quotedSender;
+                }
+            } else if (args?.[0]) {
+                const input = args[0].replace(/^@/, '').trim();
+
+                targetParticipant = participants.find(p => {
+                    const id = p.id?.split('@')[0];
+                    const phone = p.phoneNumber?.split('@')[0];
+
+                    return id === input || phone === input;
+                });
+
+                if (targetParticipant) {
+                    targetJid =
+                        targetParticipant.phoneNumber ||
+                        targetParticipant.id;
+                } else {
+                    const cleanNumber = input.replace(/[^0-9]/g, '');
+
                     if (cleanNumber.length >= 7 && cleanNumber.length <= 15) {
-                        targetPhoneNumber = cleanNumber + '@s.whatsapp.net';
+                        targetJid = `${cleanNumber}@s.whatsapp.net`;
+
+                        targetParticipant = participants.find(
+                            p =>
+                                p.phoneNumber === targetJid ||
+                                p.id === targetJid
+                        );
                     }
                 }
             } else {
-                return m.reply('ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴛᴀɢ ᴀ ᴜsᴇʀ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀ ɴᴜᴍʙᴇʀ ᴏʀ ʟɪᴅ ᴛᴏ ᴋɪᴄᴋ.');
+                return await m.reply(
+                    'ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴛᴀɢ ᴀ ᴜsᴇʀ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀ ɴᴜᴍʙᴇʀ ᴏʀ ʟɪᴅ ᴛᴏ ᴋɪᴄᴋ.'
+                );
             }
 
-            if (targetLid && !targetPhoneNumber) {
-                const participant = groupMetadata.participants.find(p => p.id === targetLid);
-                if (participant) {
-                    targetPhoneNumber = participant.phoneNumber;
-                }
+            if (!targetParticipant && targetJid) {
+                targetParticipant = participants.find(
+                    p =>
+                        p.id === targetJid ||
+                        p.phoneNumber === targetJid
+                );
             }
 
-            if (!targetPhoneNumber) {
-                return m.reply('ᴄᴏᴜʟᴅ ɴᴏᴛ ɪᴅᴇɴᴛɪꜰʏ ᴛʜᴇ ᴜsᴇʀ ᴛᴏ ᴋɪᴄᴋ. ᴛʀʏ ʀᴇᴘʟʏɪɴɢ ᴛᴏ ᴛʜᴇɪʀ ᴍᴇssᴀɢᴇ ɪɴsᴛᴇᴀᴅ.');
+            if (!targetParticipant) {
+                return await m.reply(
+                    'ᴄᴏᴜʟᴅ ɴᴏᴛ ɪᴅᴇɴᴛɪꜰʏ ᴛʜᴇ ᴜsᴇʀ ᴛᴏ ᴋɪᴄᴋ.'
+                );
             }
 
-            if (targetPhoneNumber.includes(':')) {
-                targetPhoneNumber = targetPhoneNumber.split(':')[0] + '@s.whatsapp.net';
+            targetJid =
+                targetParticipant.phoneNumber ||
+                targetParticipant.id;
+
+            const targetNumber =
+                targetParticipant.phoneNumber?.split('@')[0] ||
+                targetParticipant.id?.split('@')[0];
+
+            const owners = Array.isArray(global.owner)
+                ? global.owner
+                : [global.owner];
+
+            const isBotOwner = owners.some(owner => {
+                const ownerNumber = String(owner)
+                    .replace(/[^0-9]/g, '');
+
+                return ownerNumber && ownerNumber === targetNumber;
+            });
+
+            if (isBotOwner) {
+                return await m.reply(
+                    'ʏᴏᴜ ᴄᴀɴɴᴏᴛ ᴋɪᴄᴋ ᴛʜᴇ ʙᴏᴛ ᴏᴡɴᴇʀ.'
+                );
             }
 
-            if (!targetPhoneNumber.includes('@s.whatsapp.net')) {
-                targetPhoneNumber = targetPhoneNumber.replace('@', '') + '@s.whatsapp.net';
+            const senderJid = m.sender;
+
+            const senderBase =
+                senderJid?.split(':')[0]?.split('@')[0];
+
+            const targetBase =
+                targetJid?.split(':')[0]?.split('@')[0];
+
+            if (senderBase && targetBase && senderBase === targetBase) {
+                return await m.reply(
+                    'ʏᴏᴜ ᴄᴀɴɴᴏᴛ ᴋɪᴄᴋ ʏᴏᴜʀsᴇʟꜰ.'
+                );
             }
 
-            console.log('Final target:', targetPhoneNumber);
+            const botJid = sock.user?.id;
 
-            const isUserInGroup = groupMetadata.participants.some(p => p.phoneNumber === targetPhoneNumber);
-            
-            if (!isUserInGroup) {
-                return m.reply('ᴛʜɪs ᴜsᴇʀ ɪs ɴᴏᴛ ɪɴ ᴛʜᴇ ɢʀᴏᴜᴘ ᴏʀ ʜᴀs ᴀʟʀᴇᴀᴅʏ ʙᴇᴇɴ ʀᴇᴍᴏᴠᴇᴅ.');
+            const botBase =
+                botJid?.split(':')[0]?.split('@')[0];
+
+            if (
+                targetBase &&
+                botBase &&
+                targetBase === botBase
+            ) {
+                return await m.reply(
+                    'ʏᴏᴜ ᴄᴀɴɴᴏᴛ ᴋɪᴄᴋ ᴛʜᴇ ʙᴏᴛ.'
+                );
             }
 
-            const senderBaseForCompare = senderId.split(':')[0] + '@s.whatsapp.net';
-            if (targetPhoneNumber === senderBaseForCompare) {
-                return m.reply('ʏᴏᴜ ᴄᴀɴɴᴏᴛ ᴋɪᴄᴋ ʏᴏᴜʀsᴇʟꜰ.');
-            }
-
-            const botNumber = sock.user.id.split(':')[0] + '@s.whatsapp.net';
-            if (targetPhoneNumber === botNumber) {
-                return m.reply('ʏᴏᴜ ᴄᴀɴɴᴏᴛ ᴋɪᴄᴋ ᴛʜᴇ ʙᴏᴛ.');
-            }
-
-            const isTargetAdmin = groupMetadata.participants.some(p => 
-                p.phoneNumber === targetPhoneNumber && p.admin === 'admin'
+            await sock.groupParticipantsUpdate(
+                m.from,
+                [targetJid],
+                'remove'
             );
-            
-            if (isTargetAdmin) {
-                return m.reply('ᴄᴀɴɴᴏᴛ ᴋɪᴄᴋ ᴀɴᴏᴛʜᴇʀ ᴀᴅᴍɪɴ.');
-            }
 
-            await sock.groupParticipantsUpdate(m.from, [targetPhoneNumber], 'remove');
-            
-            await m.reply('ᴜsᴇʀ ʜᴀs ʙᴇᴇɴ ᴋɪᴄᴋᴇᴅ ꜰʀᴏᴍ ᴛʜᴇ ɢʀᴏᴜᴘ.');
+            await m.reply(
+                'ᴜsᴇʀ ʜᴀs ʙᴇᴇɴ ᴋɪᴄᴋᴇᴅ ꜰʀᴏᴍ ᴛʜᴇ ɢʀᴏᴜᴘ.'
+            );
 
         } catch (err) {
             console.error('Kick command error:', err);
-            
-            if (err.message?.includes('403') || err.data === 403) {
-                await m.reply('ɪ ᴅᴏ ɴᴏᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴋɪᴄᴋ ᴜsᴇʀs. ᴍᴀᴋᴇ sᴜʀᴇ ɪ ᴀᴍ ᴀɴ ᴀᴅᴍɪɴ.');
-            } else if (err.message?.includes('400') || err.data === 400) {
-                await m.reply('ᴄᴀɴɴᴏᴛ ᴋɪᴄᴋ ᴛʜɪs ᴜsᴇʀ. ᴛʜᴇʏ ᴍɪɢʜᴛ ᴀʟʀᴇᴀᴅʏ ʙᴇ ʀᴇᴍᴏᴠᴇᴅ ᴏʀ ɴᴏᴛ ɪɴ ᴛʜᴇ ɢʀᴏᴜᴘ.');
-            } else {
-                if (err.message?.includes('text.match is not a function')) {
-                    console.log('Kick succeeded but reply failed due to formatting');
-                } else {
-                    await m.reply('ꜰᴀɪʟᴇᴅ ᴛᴏ ᴋɪᴄᴋ ᴛʜᴇ ᴜsᴇʀ. ᴇʀʀᴏʀ: ' + (err.message || 'ᴜɴᴋɴᴏᴡɴ ᴇʀʀᴏʀ'));
-                }
+
+            if (
+                err?.message?.includes('403') ||
+                err?.data === 403
+            ) {
+                return await m.reply(
+                    'ɪ ᴅᴏ ɴᴏᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴋɪᴄᴋ ᴜsᴇʀs. ᴍᴀᴋᴇ sᴜʀᴇ ɪ ᴀᴍ ᴀɴ ᴀᴅᴍɪɴ.'
+                );
             }
+
+            if (
+                err?.message?.includes('400') ||
+                err?.data === 400
+            ) {
+                return await m.reply(
+                    'ᴄᴀɴɴᴏᴛ ᴋɪᴄᴋ ᴛʜɪs ᴜsᴇʀ. ᴛʜᴇʏ ᴍɪɢʜᴛ ᴀʟʀᴇᴀᴅʏ ʙᴇ ʀᴇᴍᴏᴠᴇᴅ ᴏʀ ɴᴏᴛ ɪɴ ᴛʜᴇ ɢʀᴏᴜᴘ.'
+                );
+            }
+
+            if (err?.message?.includes('text.match is not a function')) {
+                console.log(
+                    'Kick succeeded but reply failed due to formatting'
+                );
+                return;
+            }
+
+            await m.reply(
+                'ꜰᴀɪʟᴇᴅ ᴛᴏ ᴋɪᴄᴋ ᴛʜᴇ ᴜsᴇʀ. ᴇʀʀᴏʀ: ' +
+                (err?.message || 'ᴜɴᴋɴᴏᴡɴ ᴇʀʀᴏʀ')
+            );
         }
     }
 };
