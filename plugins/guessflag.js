@@ -1,14 +1,17 @@
 const axios = require('axios');
 
 const games = new Map();
+const processedMessages = new Set();
 
 module.exports = {
-    name: 'game',
+    name: 'flag',
     aliases: ['guessflag'],
     description: 'Guess the country from its flag',
 
     async execute(sock, m) {
         const chatId = m.key.remoteJid;
+        const sender = m.key.participant || m.key.remoteJid;
+        const playerName = m.pushName || m.sender?.split('@')[0] || 'Player';
 
         if (games.has(chatId)) {
             await m.reply('There is already a flag game running in this chat.');
@@ -18,7 +21,9 @@ module.exports = {
         try {
             const response = await axios.get(
                 'https://api-abztech.zone.id/search/countries',
-                { timeout: 30000 }
+                {
+                    timeout: 30000
+                }
             );
 
             const countries = response.data?.countries;
@@ -28,7 +33,9 @@ module.exports = {
                 return;
             }
 
-            const country = countries[Math.floor(Math.random() * countries.length)];
+            const country = countries[
+                Math.floor(Math.random() * countries.length)
+            ];
 
             const imageResponse = await axios.get(country.img, {
                 responseType: 'arraybuffer',
@@ -42,8 +49,10 @@ module.exports = {
                 caption:
                     `╭─〔 GUESS THE FLAG 〕\n` +
                     `│\n` +
-                    `│ Reply to this message\n` +
-                    `│ with the correct country.\n` +
+                    `│ Player: ${playerName}\n` +
+                    `│\n` +
+                    `│ Reply to this flag\n` +
+                    `│ with the country name.\n` +
                     `│\n` +
                     `│ You have 1 minute.\n` +
                     `│ Type .hintflag for a hint.\n` +
@@ -51,24 +60,27 @@ module.exports = {
                     `╰────────────────`
             });
 
-            const sender = m.key.participant || m.key.remoteJid;
+            const timeout = setTimeout(async () => {
+                const game = games.get(chatId);
+
+                if (!game) return;
+
+                games.delete(chatId);
+
+                await sock.sendMessage(chatId, {
+                    text:
+                        `⏰ Time's up, ${game.playerName}!\n\n` +
+                        `The correct answer was: ${game.answer}`
+                });
+            }, 60000);
 
             games.set(chatId, {
                 answer: country.name,
                 sender,
+                playerName,
                 messageId: gameMessage.key.id,
                 hintUsed: false,
-                timeout: setTimeout(async () => {
-                    const game = games.get(chatId);
-
-                    if (!game) return;
-
-                    games.delete(chatId);
-
-                    await sock.sendMessage(chatId, {
-                        text: `⏰ Time's up!\n\nThe correct answer was: ${game.answer}`
-                    });
-                }, 60000)
+                timeout
             });
 
         } catch (err) {
@@ -78,39 +90,46 @@ module.exports = {
     },
 
     async onMessage(sock, m) {
+        if (!m.text) return;
+
+        const messageId = m.key?.id;
+
+        if (!messageId) return;
+
+        if (processedMessages.has(messageId)) return;
+
+        processedMessages.add(messageId);
+
+        setTimeout(() => {
+            processedMessages.delete(messageId);
+        }, 120000);
+
         const chatId = m.key.remoteJid;
         const game = games.get(chatId);
 
-        if (!game || !m.text) return;
+        if (!game) return;
 
         const sender = m.key.participant || m.key.remoteJid;
+        const playerName = m.pushName || m.sender?.split('@')[0] || 'Player';
+        const text = m.text.trim();
 
         if (sender !== game.sender) return;
 
-        const text = m.text.trim();
-
         if (text.toLowerCase() === '.hintflag') {
-            if (game.hintUsed) {
-                await m.reply('You already used the hint.');
-                return;
-            }
+            if (game.hintUsed) return;
 
             game.hintUsed = true;
 
             const answer = game.answer;
-            const firstLetter = answer.charAt(0).toUpperCase();
-            const letters = answer.length;
 
             await m.reply(
-                `Hint:\n\n` +
-                `Starts with: ${firstLetter}\n` +
-                `Letters: ${letters}`
+                `Hint for ${game.playerName}\n\n` +
+                `Starts with: ${answer.charAt(0).toUpperCase()}\n` +
+                `Letters: ${answer.length}`
             );
 
             return;
         }
-
-        if (text.startsWith('.')) return;
 
         if (!m.quoted) return;
 
@@ -123,11 +142,14 @@ module.exports = {
             games.delete(chatId);
 
             await m.reply(
-                `Correct!\n\n` +
+                `Correct, ${playerName}!\n\n` +
                 `The answer was ${game.answer}.`
             );
         } else {
-            await m.reply('Wrong answer. Try again.');
+            await m.reply(
+                `Wrong answer, ${playerName}!\n\n` +
+                `Try again.`
+            );
         }
     }
 };
