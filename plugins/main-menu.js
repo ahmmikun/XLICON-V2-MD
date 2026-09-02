@@ -79,6 +79,7 @@ module.exports = {
 │ ᪣ ${prefix}ᴄᴏᴜᴘʟᴇᴘᴘ
 │ ᪣ ${prefix}ɢʀᴏᴜᴘ
 │ ᪣ ${prefix}ɢɪɴғᴏ
+│ ᪣ ${prefix}ᴀɴᴛɪɢsᴛ
 │
 ├─ム *sᴛᴀᴛᴜs*
 │ ᪣ ${prefix}ɢsᴛᴀᴛᴜs
