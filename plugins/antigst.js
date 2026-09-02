@@ -1,7 +1,7 @@
 const statusChats = new Map()
 
 module.exports = {
-    name: 'antigcst',
+    name: 'antigst',
     aliases: ['agst'],
     description: 'Automatically delete group status messages',
 
@@ -13,15 +13,15 @@ module.exports = {
 
         if (action === 'on') {
             statusChats.set(jid, true)
-            return await m.reply('ᴀɴᴛɪɢʀᴏᴜᴘsᴛ ᴏɴ')
+            return await m.reply('ᴀɴᴛɪɢʀᴏᴜᴘsᴛᴀᴛᴜs ᴏɴ')
         }
 
         if (action === 'off') {
             statusChats.delete(jid)
-            return await m.reply('ᴀɴᴛɪɢʀᴏᴜᴘsᴛ ᴏғғ')
+            return await m.reply('ᴀɴᴛɪɢʀᴏᴜᴘsᴛᴀᴛᴜs ᴏғғ')
         }
 
-        return await m.reply(`ᴀɴᴛɪɢʀᴏᴜᴘsᴛ: ${statusChats.has(jid) ? 'ᴏɴ' : 'ᴏғғ'}\n\nᴜsᴇ: .antigroupst on/off`)
+        return await m.reply(`ᴀɴᴛɪɢʀᴏᴜᴘsᴛ: ${statusChats.has(jid) ? 'ᴏɴ' : 'ᴏғғ'}\n\nᴜsᴇ: .antigst on/off`)
     },
 
     async onMessage(sock, m) {
@@ -35,7 +35,7 @@ module.exports = {
                 delete: m.key
             })
         } catch (e) {
-            console.log('Antigroupst delete error:', e.message)
+            console.log('ᴀɴᴛɪɢʀᴏᴜᴘsᴛᴀᴛᴜs delete error:', e.message)
         }
 
         return false
