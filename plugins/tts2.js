@@ -67,11 +67,11 @@ async function getTTSBuffer(text, lang = 'en') {
 }
 
 module.exports = {
-    name: 'tts',
+    name: 'tts2',
     description: 'Convert text to speech (supports multiple languages and Termux/Android)',
     aliases: ['say', 'speak', 'audio'],
     tags: ['main', 'tools'],
-    command: /^\.?(tts|say|speak|audio)/i,
+    command: /^\.?(say|speak|audio)/i,
 
     async execute(sock, m, args = []) {
         try {
