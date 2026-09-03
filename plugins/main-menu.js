@@ -27,10 +27,12 @@ module.exports = {
 
         const botOwner = global.ownerName || 'ABZTECH';
         const user = m.pushName || m.sender?.split('@')[0] || 'User';
+        const Founder = 'ahmmikun';
 
         const menuText = `
 
 ┌─ム xʟɪᴄᴏɴ ᴍᴜʟᴛɪᴅᴇᴠɪᴄᴇ
+│ ғᴏᴜɴᴅᴇʀ: ${Founder}
 │ ᴏᴡɴᴇʀ: ${botOwner}
 │ ᴜsᴇʀ: ${user}
 │ ᴅᴀᴛᴇ: ${date}
