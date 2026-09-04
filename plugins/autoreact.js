@@ -14,7 +14,7 @@ module.exports = {
             ];
 
             if (owners.includes(m.sender)) {
-                await m.react('✨');
+                await m.react('👑');
             }
         } catch (err) {
             console.error('❌ Auto-react error:', err);
