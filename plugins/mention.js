@@ -36,7 +36,7 @@ END:VCARD`
                 mimetype: 'audio/mp4',
                 ptt: false
             }, { quoted: fakeQuoted });
-            await m.react('✨');
+            await m.react('👑');
         } catch (err) {
             console.error('Mention-owner plugin error:', err);
         }
