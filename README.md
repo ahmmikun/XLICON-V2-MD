@@ -1,14 +1,14 @@
 # `XLICON-V2-MD`
 <br>
 
-# `TIME - TIMELESS    6 , 7 ,8 `
+# `TIME - TIMELESS`
 
 ![Typing SVG](https://readme-typing-svg.demolab.com?font=Ribeye&size=50&pause=1000&color=ff0000&center=true&width=900&height=100&lines=Its%20XLICON-V2-MD;%20Multi-Device%20WhatsApp%20Bot;%20Developed%20By%20SALMAN%20AHMAD%20and%20ABZTECH)
 <p align="center">
   
 
 ## 🌟 `Bot Intro and Features`
-[![XLICON](https://i.ibb.co/BVmdwyv8/IMG-20260417-WA0030.jpg)](https://youtu.be/WcA7GZuaN0A)
+[![XLICON](https://i.ibb.co/5xRGprW0/IMG-20260907-WA0020-2.jpg)](https://youtu.be/WcA7GZuaN0A)
 
 ### ℹ️ **About XLICON-V2**
 XLICON-V2 is a versatile Multi-Device WhatsApp bot built by [abztech](https://github.com/abrahamdw882). founded by Salman  It offers a wide range of features, making it an advanced and user-friendly bot for various purposes.
