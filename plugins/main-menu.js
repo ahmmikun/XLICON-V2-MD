@@ -32,12 +32,12 @@ module.exports = {
         const menuText = `
 
 ┌─ム xʟɪᴄᴏɴ ᴍᴜʟᴛɪᴅᴇᴠɪᴄᴇ
-│ ғᴏᴜɴᴅᴇʀ: ${Founder}
-│ ᴏᴡɴᴇʀ: ${botOwner}
-│ ᴜsᴇʀ: ${user}
-│ ᴅᴀᴛᴇ: ${date}
-│ ᴛɪᴍᴇ: ${time} (GMT)
-│ ᴘʀᴇғɪx: ${prefix}
+│ *ғᴏᴜɴᴅᴇʀ:* ${Founder}
+│ *ᴏᴡɴᴇʀ:* ${botOwner}
+│ *ᴜsᴇʀ:* ${user}
+│ *ᴅᴀᴛᴇ:* ${date}
+│ *ᴛɪᴍᴇ:* ${time} (GMT)
+│ *ᴘʀᴇғɪx:* ${prefix}
 ╰──────────────────╯
 
 ┌─ム ᴀᴠᴀɪʟᴀʙʟᴇ ᴄᴏᴍᴍᴀɴᴅs
