@@ -9,6 +9,8 @@ module.exports = {
     description: 'Guess the country from its flag',
 
     async execute(sock, m) {
+        // reat emoji for this cmd
+        await m.react('🏁');
         const chatId = m.key.remoteJid;
         const sender = m.key.participant || m.key.remoteJid;
         const playerName = m.pushName || m.sender?.split('@')[0] || 'Player';
