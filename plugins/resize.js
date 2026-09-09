@@ -9,6 +9,9 @@ module.exports = {
     command: /^.?(resize|imgresize|resizeimg)/i,
 
     async execute(sock, m, args) {
+         // reat emoji for this cmd
+            
+        await m.react('✂️');
         const chatId = m.key.remoteJid;
 
         const quoted = m.quoted;
