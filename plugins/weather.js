@@ -9,6 +9,7 @@ module.exports = {
 
     async execute(sock, m) {
         try {
+            await m.react('🌤');
             // Extract the query (city name) from the message body
             const messageText = m.body || m.text || '';
             const q = messageText.replace(/^(?:\.|\/|!)?\s*weather\s*/i, '').trim();
