@@ -54,6 +54,8 @@ module.exports = {
 
   async execute(sock, m, args) {
     try {
+         // reat emoji for this cmd
+         await m.react('🔊');
       if (!args[0]) {
         return m.reply("ᴜsᴀɢᴇ:\n.ᴀɪᴠ <ʏᴏᴜʀ ǫᴜᴇsᴛɪᴏɴ>\n.ᴀɪᴠ ʜɪ\nᴇxᴀᴍᴘʟᴇ: .ᴀɪᴠ ᴡʜᴀᴛ ɪs ᴛʜᴇ ᴄᴀᴘɪᴛᴀʟ ᴏꜰ ꜰʀᴀɴᴄᴇ");
       }
