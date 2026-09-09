@@ -7,6 +7,8 @@ module.exports = {
 
     async execute(sock, m) {
         try {
+             // reat emoji for this cmd
+            await m.react('💯');
             await sendInteractiveMessage(sock, m.from, {
                 title: 'XLICON v2 ᴍᴜʟᴛɪᴅᴇᴠɪᴄᴇ',
                 text: `Tap any button below to execute the command instantly:\n\n` +
