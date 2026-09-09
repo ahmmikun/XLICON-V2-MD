@@ -9,6 +9,8 @@ aliases: ['yt', 'song'],
 command: /^.?(play|yt|song)/i,
 
 async execute(sock, m, args) {
+     // reat emoji for this cmd
+            await m.react('🎧');
     const prefix = global.BOT_PREFIX || '.';
     const chatId = m.key.remoteJid;
     const query = args.join(" ").trim();
