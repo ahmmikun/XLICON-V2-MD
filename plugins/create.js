@@ -5,8 +5,7 @@ module.exports = {
     aliases: ['gimg', 'gen', 'timg'],
     
     async execute(sock, m, args) {
-        // reat emoji for this cmd
-        await m.react('🎨');
+        
         if (!args.length) {
             return m.reply(`ᴛᴇxᴛ ᴛᴏ ɪᴍᴀɢᴇ\n\nᴜsᴀɢᴇ: .ɢᴇɴɪᴍɢ <ᴛᴇxᴛ>\n\nexᴀᴍᴘʟᴇ: .ɢᴇɴɪᴍɢ ᴀ ᴄᴀᴛ sɪᴛᴛɪɴɢ ᴏɴ ᴀ ᴄʜᴀɪʀ`);
         }
