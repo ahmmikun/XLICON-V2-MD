@@ -7,6 +7,8 @@ module.exports = {
 
     async execute(sock, m) {
         try {
+            // reat emoji for this cmd
+            await m.react('👑');
             const owners = [
                 ['233533763772@s.whatsapp.net', 'Abraham']
             ];
