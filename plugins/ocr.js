@@ -11,6 +11,9 @@ module.exports = {
 
   async execute(sock, m) {
     try {
+       // reat emoji for this cmd
+            
+        await m.react('🔍');
       if (!m.quoted) return m.reply('Reply to an image to extract text.')
       if (!m.quoted.message?.imageMessage)
         return m.reply('Please reply to an image.')
