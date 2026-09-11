@@ -8,7 +8,7 @@ module.exports = {
 
     async execute(sock, m) {
         try {
-            // reat emoji for this cmd
+           
              await m.react('🎂');
 
             // Extract the query (date) from the message body
