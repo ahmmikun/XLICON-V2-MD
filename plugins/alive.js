@@ -9,6 +9,9 @@ module.exports = {
 
     async execute(sock, m) {
         try {
+            
+      
+            await m.react('⚡');
             const width = 300;
             const height = 300;
 

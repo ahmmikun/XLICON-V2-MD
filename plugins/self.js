@@ -5,6 +5,8 @@ module.exports = {
     aliases: ['selfmode'],
     
     async execute(sock, m, args) {
+         
+            await m.react('⚙️');
         if (!global.owners.includes(m.sender)) {
             return;
         }

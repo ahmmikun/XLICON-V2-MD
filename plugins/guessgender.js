@@ -8,6 +8,8 @@ module.exports = {
 
     async execute(sock, m) {
         try {
+             
+            await m.react('🔮');
             // Extract the query (name) from the message body
             const messageText = m.body || m.text || '';
             

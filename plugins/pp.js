@@ -7,6 +7,8 @@ module.exports = {
 
   async execute(sock, m) {
     try {
+      
+            await m.react('🖼️');
       const jid = m.quoted?.key?.participant || m.sender
 
       let ppUrl

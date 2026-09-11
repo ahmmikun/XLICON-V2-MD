@@ -4,6 +4,8 @@ module.exports = {
     description: 'Delete a quoted message',
 
     async execute(sock, m) {
+        
+        await m.react('🧹');
         if (!m.isOwner && !m.isAdmin) return
 
         if (!m.quoted) {

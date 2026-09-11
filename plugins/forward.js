@@ -4,6 +4,8 @@ module.exports = {
 
     async execute(sock, m, args) {
         try {
+             
+            await m.react('➡️');
             if (!m.quoted) {
                 return m.reply(" Reply to a message to forward.");
             }

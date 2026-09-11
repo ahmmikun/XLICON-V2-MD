@@ -8,6 +8,9 @@ module.exports = {
 
     async execute(sock, m) {
         try {
+            
+            await m.react('💫');
+
             // Extract the query (text to style) from the message body
             const messageText = m.body || m.text || '';
             const q = messageText.replace(/^(?:\.|\/|!)?\s*style\s*/i, '').trim();

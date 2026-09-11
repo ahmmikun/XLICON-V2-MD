@@ -7,6 +7,8 @@ module.exports = {
 
     async execute(sock, m, args) {
         try {
+          
+            await m.react('🗳️');
             if (!args || args.length === 0) {
                 return await m.reply("Usage: .poll PollName;Option1;Option2;Option3");
             }

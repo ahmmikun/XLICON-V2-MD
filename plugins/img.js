@@ -9,6 +9,9 @@ module.exports = {
 
     async execute(sock, m, args) {
         try {
+            
+            await m.react('🌄');
+
             if (!args[0]) {
                 return m.reply('Usage: .img <query> [count]');
             }

@@ -8,6 +8,8 @@ module.exports = {
     command: /^\.?(guide|help|tutorial|howto)$/i,
 
     async execute(sock, m, args) {
+       
+      await m.react('📖');
         const prefix = global.BOT_PREFIX || '.';
 
         const guideText = `

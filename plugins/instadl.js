@@ -5,6 +5,8 @@ module.exports = {
     aliases: ['insta', 'instagram', 'ig'],
     
     async execute(sock, m, args) {
+         
+            await m.react('📥');
         if (!args.length) {
             return m.reply(`📸 ɪɴsᴛᴀɢʀᴀᴍ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ\n\nᴜsᴀɢᴇ: .ɪɢᴅʟ <ɪɴsᴛᴀɢʀᴀᴍ ᴜʀʟ>\n\nexᴀᴍᴘʟᴇ: .ɪɢᴅʟ ʜᴛᴛᴘs://ᴡᴡᴡ.ɪɴsᴛᴀɢʀᴀᴍ.ᴄᴏᴍ/ʀᴇᴇʟ/xxxxxxxx`);
         }

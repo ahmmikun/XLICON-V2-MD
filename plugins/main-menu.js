@@ -6,6 +6,9 @@ module.exports = {
     aliases: ['help', 'cmdlist', 'commands'],
 
     async execute(sock, m) {
+        
+            await m.react('💯');
+            
         const prefix = global.BOT_PREFIX || '.';
 
         const now = new Date();
