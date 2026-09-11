@@ -9,7 +9,7 @@ module.exports = {
 
     async execute(sock, m) {
         try {
-            // reat emoji for this cmd
+             
             await m.react('🤫');
             // Extract the query from the message body
             const messageText = m.body || m.text || '';
