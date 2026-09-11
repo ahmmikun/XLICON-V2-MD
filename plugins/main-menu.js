@@ -6,7 +6,7 @@ module.exports = {
     aliases: ['help', 'cmdlist', 'commands'],
 
     async execute(sock, m) {
-        // reat emoji for this cmd
+        
             await m.react('💯');
             
         const prefix = global.BOT_PREFIX || '.';
