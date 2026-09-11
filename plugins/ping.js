@@ -6,7 +6,7 @@ module.exports = {
     description: 'Check bot response speed',
 
     async execute(sock, m, args) {
-         // reat emoji for this cmd
+        
             await m.react('⏱️');
         const start = Date.now();
         const sentMsg = await m.reply('Pinging...');
