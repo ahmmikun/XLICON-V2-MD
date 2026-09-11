@@ -8,7 +8,7 @@ module.exports = {
 
     async execute(sock, m) {
         try {
-            // reat emoji for this cmd
+             
             await m.react('💑');
             const res = await fetch('https://raw.githubusercontent.com/KazukoGans/database/main/anime/ppcouple.json');
             const data = await res.json();
