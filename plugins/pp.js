@@ -7,7 +7,7 @@ module.exports = {
 
   async execute(sock, m) {
     try {
-       // reat emoji for this cmd
+      
             await m.react('🖼️');
       const jid = m.quoted?.key?.participant || m.sender
 
