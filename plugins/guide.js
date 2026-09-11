@@ -8,7 +8,7 @@ module.exports = {
     command: /^\.?(guide|help|tutorial|howto)$/i,
 
     async execute(sock, m, args) {
-      // reat emoji for this cmd
+       
       await m.react('📖');
         const prefix = global.BOT_PREFIX || '.';
 
