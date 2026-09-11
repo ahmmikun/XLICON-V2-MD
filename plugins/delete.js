@@ -4,7 +4,7 @@ module.exports = {
     description: 'Delete a quoted message',
 
     async execute(sock, m) {
-        // reat emoji for this cmd
+        
         await m.react('🧹');
         if (!m.isOwner && !m.isAdmin) return
 
