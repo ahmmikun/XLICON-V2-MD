@@ -9,7 +9,7 @@ module.exports = {
 
     async execute(sock, m, args) {
         try {
-            // reat emoji for this cmd
+            
             await m.react('🌄');
 
             if (!args[0]) {
