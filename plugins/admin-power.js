@@ -11,26 +11,42 @@ module.exports = {
             return await m.reply('ᴏɴʟʏ ɢʀᴏᴜᴘ ᴀᴅᴍɪɴs ᴏʀ ᴏᴡɴᴇʀs ᴄᴀɴ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ!')
         }
 
-        let target
+        let target = null
 
         if (m.quoted?.sender) {
             target = m.quoted.sender
-        } else if (m.mentionedJid?.length) {
+        }
+
+        if (!target && Array.isArray(m.mentionedJid) && m.mentionedJid.length) {
             target = m.mentionedJid[0]
-        } else {
+        }
+
+        if (!target) {
+            const text = m.body || m.text || m.message?.extendedTextMessage?.text || ''
+            const mentionedNumber = text.match(/@(\d+)/)?.[1]
+
+            if (mentionedNumber) {
+                const participant = m.groupMetadata?.participants?.find(
+                    p => p.id.split('@')[0] === mentionedNumber
+                )
+
+                if (participant) {
+                    target = participant.id
+                }
+            }
+        }
+
+        if (!target) {
             return await m.reply(
-                `ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ ᴏʀ ᴍᴇɴᴛɪᴏɴ ᴛʜᴇᴍ.\n\n` +
+                `ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ ᴏʀ ᴛᴀɢ ᴛʜᴇᴍ.\n\n` +
                 `ᴇxᴀᴍᴘʟᴇ:\n` +
                 `.ᴘʀᴏᴍᴏᴛᴇ @ᴜsᴇʀ\n` +
                 `.ᴅᴇᴍᴏᴛᴇ @ᴜsᴇʀ`
             )
         }
 
-        const command = m.command?.toLowerCase()
-
-        const action = command === 'demote'
-            ? 'demote'
-            : 'promote'
+        const command = m.command?.toLowerCase() || 'promote'
+        const action = command === 'demote' ? 'demote' : 'promote'
 
         try {
             await sock.groupParticipantsUpdate(
@@ -46,7 +62,10 @@ module.exports = {
             return await m.reply('ᴜsᴇʀ ʜᴀs ʙᴇᴇɴ ᴅᴇᴍᴏᴛᴇᴅ.')
         } catch (error) {
             console.error(`${action} error:`, error)
-            return await m.reply(`ғᴀɪʟᴇᴅ ᴛᴏ ${action} ᴜsᴇʀ.\n\n${error.message}`)
+
+            return await m.reply(
+                `ғᴀɪʟᴇᴅ ᴛᴏ ${action} ᴜsᴇʀ.\n\n${error.message}`
+            )
         }
     }
 }
