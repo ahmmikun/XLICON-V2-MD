@@ -3,7 +3,7 @@ const sharp = require('sharp');
 module.exports = {
     name: 'sticker',
     aliases: ['s', 'sr', 'stg'],
-    description: 'Create stickers with image effects',
+    description: 'Create rounded stickers with optional effects',
 
     async execute(sock, m) {
         if (!m.quoted || !m.quoted.isMedia) {
@@ -13,7 +13,6 @@ module.exports = {
         try {
             await m.react('🎨');
 
-            const chatId = m.key.remoteJid;
             const args = (m.text || '').trim().split(/\s+/).slice(1);
             const effect = (args[0] || 'normal').toLowerCase();
 
@@ -39,21 +38,21 @@ module.exports = {
             if (!allowedEffects.includes(effect)) {
                 return m.reply(
                     `Unknown effect: ${effect}\n\n` +
-                    `Available effects:\n` +
-                    `• .sr\n` +
-                    `• .sr red\n` +
-                    `• .sr blue\n` +
-                    `• .sr green\n` +
-                    `• .sr purple\n` +
-                    `• .sr yellow\n` +
-                    `• .sr cyan\n` +
-                    `• .sr pink\n` +
-                    `• .sr grayscale\n` +
-                    `• .sr sepia\n` +
-                    `• .sr vintage\n` +
-                    `• .sr invert\n` +
-                    `• .sr bright\n` +
-                    `• .sr dark`
+                    `Available:\n` +
+                    `.sr\n` +
+                    `.sr red\n` +
+                    `.sr blue\n` +
+                    `.sr green\n` +
+                    `.sr purple\n` +
+                    `.sr yellow\n` +
+                    `.sr cyan\n` +
+                    `.sr pink\n` +
+                    `.sr grayscale\n` +
+                    `.sr sepia\n` +
+                    `.sr vintage\n` +
+                    `.sr invert\n` +
+                    `.sr bright\n` +
+                    `.sr dark`
                 );
             }
 
@@ -236,15 +235,9 @@ module.exports = {
                 })
                 .toBuffer();
 
-            await sock.sendMessage(
-                chatId,
-                {
-                    sticker: stickerBuffer
-                },
-                {
-                    quoted: m
-                }
-            );
+            await m.reply({
+                sticker: stickerBuffer
+            });
 
             await m.react('✅');
 
