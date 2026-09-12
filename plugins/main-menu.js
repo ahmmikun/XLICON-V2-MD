@@ -7,7 +7,7 @@ module.exports = {
 
     async execute(sock, m) {
         
-            await m.react('💯');
+            await m.react('✔️');
             
         const prefix = global.BOT_PREFIX || '.';
 
