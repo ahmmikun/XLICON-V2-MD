@@ -18,7 +18,7 @@ module.exports = {
             // Check if user input is provided
             if (!q) {
                 return await sock.sendMessage(m.from, { 
-                    text: "*Example:* `.hide 🎁 , Bhi maray passay kab wapas karay ga ?`" 
+                    text: "*Example:* `.hide ☀️ ,  Good morning ! Rise and shine!`" 
                 });
             }
 
