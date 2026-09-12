@@ -8,7 +8,7 @@ module.exports = {
     async execute(sock, m) {
         try {
              
-            await m.react('💯');
+            await m.react('✅️');
             await sendInteractiveMessage(sock, m.from, {
                 title: 'XLICON v2 ᴍᴜʟᴛɪᴅᴇᴠɪᴄᴇ',
                 text: `Tap any button below to execute the command instantly:\n\n` +
