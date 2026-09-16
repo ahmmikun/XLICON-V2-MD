@@ -8,8 +8,7 @@ module.exports = {
     command: /^\.?(guide|help|tutorial|howto)$/i,
 
     async execute(sock, m, args) {
-       
-      await m.react('📖');
+        await m.react('📖');
         const prefix = global.BOT_PREFIX || '.';
 
         const guideText = `
@@ -23,7 +22,7 @@ Below is everything you need to know.
 📁 *DOWNLOADERS*
 ━━━━━━━━━━━━━━━━━━━━━━
 > *TikTok (no watermark)*
-  ${prefix}tiktok <url>
+  ${prefix}tiktok or ${prefix}tt <url>
   Example: ${prefix}tiktok https://vt.tiktok.com/xxx
 
 > *YouTube Audio*
@@ -31,8 +30,8 @@ Below is everything you need to know.
   Example: ${prefix}ytmp3 lofi hip hop
 
 > *YouTube Video*
-  ${prefix}ymp4 <url or search>
-  Example: ${prefix}ymp4 never gonna give you up
+  ${prefix}ytmp4 <url or search>
+  Example: ${prefix}ytmp4 never gonna give you up
 
 > *YouTube Search + Download*
   ${prefix}play <query>
@@ -56,6 +55,10 @@ Below is everything you need to know.
 > *AI Voice (audio response)*
   ${prefix}aiv <question>
   → AI answers with a voice message
+
+> *AI Image Generation*
+  ${prefix}gen <prompt>
+  → Generates an image based on your description
 
 ━━━━━━━━━━━━━━━━━━━━━━
 🔧 *TOOLS*
@@ -112,11 +115,54 @@ Below is everything you need to know.
   → Reply to a message or use on yourself
 
 ━━━━━━━━━━━━━━━━━━━━━━
-👥 *GROUP COMMANDS*
+🌸 *ANIME*
 ━━━━━━━━━━━━━━━━━━━━━━
-> ${prefix}tagme — Tag yourself
-> ${prefix}couplepp — Random anime couple image
-> ${prefix}ginfo <invite link> — Get group info
+> *Random Anime Images*
+  ${prefix}waifu
+  → Sends a random anime waifu image
+
+  ${prefix}neko
+  → Sends a random anime neko (catgirl) image
+
+  ${prefix}kitsune
+  → Sends a random anime kitsune (fox) image
+
+  ${prefix}husbando
+  → Sends a random anime husbando image
+
+  ${prefix}couplepp
+  → Random anime couple profile pictures
+
+━━━━━━━━━━━━━━━━━━━━━━
+🎮 *FUN & SEARCH*
+━━━━━━━━━━━━━━━━━━━━━━
+> *Fun Commands*
+  ${prefix}blue / ${prefix}flag
+  ${prefix}hide / ${prefix}style
+  ${prefix}guessgender / ${prefix}agecalculator
+
+> *Search*
+  ${prefix}weather <city>
+  → Get current weather information
+
+━━━━━━━━━━━━━━━━━━━━━━
+👥 *GROUP & ADMIN*
+━━━━━━━━━━━━━━━━━━━━━━
+> *Tagging*
+  ${prefix}tagme — Tag yourself
+  ${prefix}tagall / ${prefix}tagall1 — Tag everyone in the group
+
+> *Management*
+  ${prefix}group — Open/close group settings
+  ${prefix}ginfo <invite link> — Get group info
+  ${prefix}antigst — Anti-group link/sticker protection
+  ${prefix}kick / ${prefix}promote / ${prefix}demote — Admin actions
+
+━━━━━━━━━━━━━━━━━━━━━━
+📊 *STATUS & CHANNEL*
+━━━━━━━━━━━━━━━━━━━━━━
+> ${prefix}gstatus — Check group status
+> ${prefix}channelid — Get channel ID info
 
 ━━━━━━━━━━━━━━━━━━━━━━
 📌 *GENERAL*
@@ -125,6 +171,7 @@ Below is everything you need to know.
 > ${prefix}ping — Check bot speed
 > ${prefix}uptime — Check bot uptime
 > ${prefix}owner — Contact bot owner
+> ${prefix}menu2 — Show alternative menu style
 
 ━━━━━━━━━━━━━━━━━━━━━━
 💡 *TIPS*
