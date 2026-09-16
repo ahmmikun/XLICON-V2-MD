@@ -6,9 +6,8 @@ module.exports = {
     aliases: ['help', 'cmdlist', 'commands'],
 
     async execute(sock, m) {
+        await m.react('✔️');
         
-            await m.react('✔️');
-            
         const prefix = global.BOT_PREFIX || '.';
 
         const now = new Date();
@@ -33,7 +32,6 @@ module.exports = {
         const Founder = 'ahmmikun';
 
         const menuText = `
-
 ┌─ム xʟɪᴄᴏɴ ᴍᴜʟᴛɪᴅᴇᴠɪᴄᴇ
 │ *ғᴏᴜɴᴅᴇʀ:* ${Founder}
 │ *ᴏᴡɴᴇʀ:* ${botOwner}
@@ -86,6 +84,12 @@ module.exports = {
 ├─ム *ꜱᴇᴀʀᴄʜ*
 │ ᪣ ${prefix}ᴡᴇᴀᴛʜᴇʀ
 │
+├─ム *ᴀɴɪᴍᴇ*
+│ ᪣ ${prefix}ᴡᴀɪғᴜ
+│ ᪣ ${prefix}ɴᴇᴋᴏ
+│ ᪣ ${prefix}ᴋɪᴛꜱᴜɴᴇ
+│ ᪣ ${prefix}ʜᴜꜱʙᴀɴᴅᴏ
+│
 ├─ム *ɢʀᴏᴜᴘ*
 │ ᪣ ${prefix}ᴛᴀɢᴀʟʟ
 │ ᪣ ${prefix}ᴛᴀɢᴀʟʟ1
@@ -122,7 +126,7 @@ module.exports = {
 
         } catch (err) {
             console.error('Menu error:', err);
-            return;
+            await m.reply('❌ Failed to load menu. Please try again later.');
         }
     }
 };
