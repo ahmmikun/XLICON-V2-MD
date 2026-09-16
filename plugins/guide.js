@@ -183,7 +183,7 @@ Below is everything you need to know.
 • AI commands are available to everyone
 • Self mode restricts bot to owner only
 
-> 「 𝙏𝙞𝙢𝙚 - 𝙏𝙞𝙢𝙚𝙡𝙚𝙨𝙈 」
+> 「 𝙏𝙞𝙢𝙚 - 𝙏𝙞𝙢𝙚𝙡𝙚𝙨𝙨 」
 `.trim();
 
         try {
