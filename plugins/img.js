@@ -83,16 +83,10 @@ module.exports = {
             }
 
             if (validImages.length === 1) {
-                await sock.sendMessage(
-                    m.from,
-                    {
-                        image: validImages[0].buffer,
-                        caption: `🌄 *${query}*`
-                    },
-                    {
-                        quoted: m
-                    }
-                );
+                await m.reply({
+                    image: validImages[0].buffer,
+                    caption: `🌄 *${query}*`
+                });
 
                 await m.react('✅');
                 return;
