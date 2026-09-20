@@ -1,51 +1,50 @@
 module.exports = {
-    name: 'hide',
-    description: 'Hide a message inside emojis.',
-    aliases: ['hidemsg'],
+    name: 'readmore',
+    description: 'Create WhatsApp read more messages',
+    aliases: ['hide', 'readmore'],
     tags: ['other'],
-    
-    
-    command: /^(?:\.|\/|!)?\s*hide/i,
+
+    command: /^(?:\.|\/|!)?\s*(?:hide|read\s*more)/i,
 
     async execute(sock, m) {
         try {
-             
             await m.react('🤫');
-            // Extract the query from the message body
+
             const messageText = m.body || m.text || '';
-            const q = messageText.replace(/^(?:\.|\/|!)?\s*hide\s*/i, '').trim();
 
-            // Check if user input is provided
+            const q = messageText
+                .replace(/^(?:\.|\/|!)?\s*(?:hide|read\s*more)\s*/i, '')
+                .trim();
+
             if (!q) {
-                return await sock.sendMessage(m.from, { 
-                    text: "*Example:* `.hide ☀️ ,  Good morning ! Rise and shine!`" 
+                return await sock.sendMessage(m.from, {
+                    text: '*Example:* `.hide Good morning 🌞`'
                 });
             }
 
-            // Fetch hidden message data from the API
-            const apiUrl = `https://zaid-bhi-hide-msg-in-emoji.vercel.app/api/?q=${encodeURIComponent(q)}`;
-            const response = await fetch(apiUrl);
-            
-            if (!response.ok) {
-                throw new Error(`API responded with status: ${response.status}`);
-            }
-            
-            const result = await response.json();
+            let output = q;
 
-            // ✅ Check if output is available in API response (matching your 'style' plugin logic)
-            if (result && result.output) {
-                await sock.sendMessage(m.from, { 
-                    text: result.output 
-                });
+            if (q.includes(',')) {
+                const parts = q.split(',');
+                const title = parts.shift().trim();
+                const hiddenText = parts.join(',').trim();
+
+                output = `${title}\n\n${'\u200e'.repeat(4001)}${hiddenText}`;
             } else {
-                throw new Error("Could not retrieve hidden message from API.");
+                output = `\u200e${q}`;
+                output = '\u200e'.repeat(4001) + q;
             }
+
+            await sock.sendMessage(m.from, {
+                text: output
+            });
 
         } catch (err) {
-            console.error('❌ Hide plugin error:', err);
-            await sock.sendMessage(m.from, { 
-                text: `Error: ${err.message || 'Failed to hide message. Please try again.'}` 
+            console.error('❌ XLICON V2 ReadMore Error:', err);
+
+            await sock.sendMessage(m.from, {
+                text: `Error: ${err.message || 'Failed to create read more message.'}`
             });
         }
-    },
+    }
 };
