@@ -1,3 +1,4 @@
+// use this key for ocr K81241004488957  in env
 const axios = require('axios')
 const FormData = require('form-data')
 const { sendInteractiveMessage } = require('gifted-btns')
