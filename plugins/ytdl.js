@@ -35,7 +35,7 @@ module.exports = {
             }
 
             const apiUrl =
-                `https://api-abztech.zone.id/download/ytmp3?url=${encodeURIComponent(finalUrl)}`;
+                `https://api-abztech.apps.mistral.run/download/ytmp3?url=${encodeURIComponent(finalUrl)}`;
 
             const apiRes = await fetch(apiUrl);
             const data = await apiRes.json();
