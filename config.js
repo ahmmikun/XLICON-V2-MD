@@ -1,3 +1,4 @@
+//incase you guys read this i found issue why bot stop working after linking with session id  i will fix soon
 require('dotenv').config();
 global.sessionid = process.env.SESSION_ID || '';
 global.BOT_PREFIX = '.';
