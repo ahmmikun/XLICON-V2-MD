@@ -1,4 +1,3 @@
-
 const yts = require('yt-search');
 
 let lastQuality = 720;
