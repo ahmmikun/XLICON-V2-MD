@@ -1,3 +1,4 @@
+
 const yts = require('yt-search');
 
 let lastQuality = 720;
@@ -14,7 +15,9 @@ module.exports = {
         const input = args.join(' ').trim();
 
         if (!input) {
-            return m.reply('Usage:\n.ymp4 <YouTube link or search query>');
+            return m.reply(
+                'Usage:\n.ymp4 <YouTube link or search query>'
+            );
         }
 
         try {
@@ -37,13 +40,13 @@ module.exports = {
             }
 
             const apiUrl =
-                'https://api-abztech.zone.id/download/omdown?url=' +
+                'https://api-abztech.apps.mistral.run/download/ytdl?url=' +
                 encodeURIComponent(finalUrl);
 
             const apiRes = await fetch(apiUrl);
             const data = await apiRes.json();
 
-            if (!apiRes.ok || !data?.success) {
+            if (!apiRes.ok || !data?.status) {
                 return m.reply(
                     `❌ API Error: ${data?.message || 'Failed to get video.'}`
                 );
@@ -52,31 +55,50 @@ module.exports = {
             const title =
                 data.title || searchInfo?.title || 'YouTube Video';
 
-            const videos = data.formats
-                .filter(f => f.kind === 'video' && f.ext === 'mp4')
-                .map(f => ({
-                    ...f,
-                    quality: Number(
-                        f.label.match(/(\d+)p/i)?.[1] || 0
-                    )
-                }));
+            const duration = data.duration || 'Unknown';
+            const MAX_SIZE = 64 * 1024 * 1024;
+
+            const videos = [
+                ...(Array.isArray(data.video) ? data.video : [])
+            ];
+
+            if (data.downloadUrl) {
+                videos.push({
+                    quality: data.quality || '720p',
+                    url: data.downloadUrl
+                });
+            }
+
+            const uniqueVideos = [
+                ...new Map(
+                    videos
+                        .filter(v => v?.url)
+                        .map(v => [v.url, v])
+                ).values()
+            ];
+
+            if (!uniqueVideos.length) {
+                return m.reply('❌ No MP4 format found.');
+            }
 
             lastQuality = lastQuality === 480 ? 720 : 480;
 
             const selected =
-                videos.find(v => v.quality === lastQuality) ||
-                videos[0];
+                uniqueVideos.find(v =>
+                    Number(v.quality?.match(/\d+/)?.[0]) === lastQuality
+                ) ||
+                uniqueVideos.find(v =>
+                    Number(v.quality?.match(/\d+/)?.[0]) === 720
+                ) ||
+                uniqueVideos[0];
 
-            if (!selected) {
-                return m.reply('❌ No MP4 format found.');
-            }
-
-            const MAX_SIZE = 64 * 1024 * 1024;
+            const quality = selected.quality || 'Unknown';
 
             await m.reply(
-                `⏳ Checking video size...\n\n` +
+                `⏳ Downloading video...\n\n` +
                 `🎬 ${title}\n` +
-                `📺 Quality: ${selected.quality}p`
+                `📺 Quality: ${quality}\n` +
+                `⏱️ Duration: ${duration}`
             );
 
             const videoRes = await fetch(selected.url);
@@ -93,7 +115,6 @@ module.exports = {
 
             if (contentLength > MAX_SIZE) {
                 await videoRes.body?.cancel();
-
                 return m.reply(
                     '❌ Video exceeds 64 MB. Download cancelled.'
                 );
@@ -107,7 +128,6 @@ module.exports = {
 
                 if (totalSize > MAX_SIZE) {
                     await videoRes.body?.cancel();
-
                     return m.reply(
                         '❌ Video exceeds 64 MB. Download cancelled.'
                     );
@@ -135,8 +155,9 @@ module.exports = {
                     fileName: `${safeName}.mp4`,
                     caption:
                         `🎬 ${title}\n\n` +
-                        `📺 Quality: ${selected.quality}p\n` +
-                        `📦 Size: ${(buffer.length / (1024 * 1024)).toFixed(2)} MB\n` +
+                        `📺 Quality: ${quality}\n` +
+                        `⏱️ Duration: ${duration}\n` +
+                        `📦 Size: ${(buffer.length / (1024 * 1024)).toFixed(2)} MB\n\n` +
                         `ᴅᴏᴡɴʟᴏᴀᴅᴇᴅ ʙʏ XLICON V2`,
                     contextInfo: {
                         forwardingScore: 999,
