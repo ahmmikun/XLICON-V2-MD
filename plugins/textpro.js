@@ -55,7 +55,7 @@ module.exports = {
 
             await m.reply('⏳ `ɢᴇɴᴇʀᴀᴛɪɴɢ ᴛᴇxᴛ ᴇꜰꜰᴇᴄᴛ...`');
 
-            const apiUrl = `https://api-abztech.zone.id/tools/textpro?text=${encodeURIComponent(text)}&style=${style}`;
+            const apiUrl = `https://api-abztech.apps.mistral.run/tools/textpro?text=${encodeURIComponent(text)}&style=${style}`;
             
             const imageBuffer = await axios.get(apiUrl, {
                 responseType: 'arraybuffer'
