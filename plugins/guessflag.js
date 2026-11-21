@@ -22,7 +22,7 @@ module.exports = {
 
         try {
             const response = await axios.get(
-                'https://api-abztech.zone.id/search/countries',
+                'https://api-abztech.apps.mistral.run/search/countries',
                 {
                     timeout: 30000
                 }
