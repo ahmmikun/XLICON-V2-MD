@@ -15,7 +15,7 @@ module.exports = {
         await m.reply(`ɢᴇɴᴇʀᴀᴛɪɴɢ ɪᴍᴀɢᴇ ғᴏʀ: ${text}`);
         
         try {
-            const imageUrl = `https://api-abztech.zone.id/ai/genimg?text=${encodeURIComponent(text)}`;
+            const imageUrl = `https://api-abztech.apps.mistral.run/ai/genimg?text=${encodeURIComponent(text)}`;
             
             const response = await axios({
                 method: 'get',
