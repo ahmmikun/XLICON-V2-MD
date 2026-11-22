@@ -153,7 +153,7 @@ async function serializeMessage(sock, msg) {
 
     const isGroupOwner = isGroup
         ? senderNormalized === groupOwnerId ||
-          normalizeJid(participantData?.id || participantData?.jid || '') === groupOwnerId
+        normalizeJid(participantData?.id || participantData?.jid || '') === groupOwnerId
         : false
 
     let quoted
@@ -162,50 +162,112 @@ async function serializeMessage(sock, msg) {
         msg.message?.extendedTextMessage?.contextInfo ||
         msg.message?.imageMessage?.contextInfo ||
         msg.message?.videoMessage?.contextInfo ||
+        msg.message?.audioMessage?.contextInfo ||
         msg.message?.documentMessage?.contextInfo
 
-    if (ctxInfo?.quotedMessage) {
-        const qMsg = ctxInfo.quotedMessage
-        const qType = Object.keys(qMsg || {})[0] || ''
-
-        quoted = {
-            key: {
-                remoteJid: from,
+    if (ctxInfo?.stanzaId) {
+        let qMsg = ctxInfo.quotedMessage
+        const storedMsg = typeof global.getMessage === 'function'
+            ? global.getMessage({
                 id: ctxInfo.stanzaId,
-                participant: ctxInfo.participant || from
-            },
-            message: qMsg,
-            type: qType,
-            body:
-                qMsg?.conversation ||
-                qMsg?.extendedTextMessage?.text ||
-                qMsg?.[qType]?.caption ||
-                '',
-            isMedia: [
+                remoteJid: from
+            })
+            : null
+
+        if (!qMsg || Object.keys(qMsg).length === 0) {
+            qMsg = storedMsg
+        }
+
+        if (qMsg || storedMsg) {
+            const activeMsg = qMsg || storedMsg
+            let inner = activeMsg
+            let isViewOnce = false
+
+            for (let i = 0; i < 6 && inner; i++) {
+                const vo =
+                    inner.viewOnceMessage ||
+                    inner.viewOnceMessageV2 ||
+                    inner.viewOnceMessageV2Extension
+
+                if (vo?.message) {
+                    isViewOnce = true
+                    inner = vo.message
+                    continue
+                }
+
+                const wrap =
+                    inner.ephemeralMessage ||
+                    inner.documentWithCaptionMessage
+
+                if (wrap?.message) {
+                    inner = wrap.message
+                    continue
+                }
+
+                break
+            }
+
+            const innerType = Object.keys(inner || {})[0] || ''
+            const isMedia = [
                 'imageMessage',
                 'videoMessage',
                 'documentMessage',
                 'audioMessage',
                 'stickerMessage'
-            ].includes(qType),
-            mediaType: qType
-                ? qType.replace('Message', '').toLowerCase()
-                : '',
-            mimetype: qMsg?.[qType]?.mimetype || null,
-            download: async () =>
-                await downloadMediaMessage(
-                    {
-                        key: {
-                            remoteJid: from,
-                            id: ctxInfo.stanzaId,
-                            participant: ctxInfo.participant || from
-                        },
-                        message: qMsg
-                    },
-                    'buffer',
-                    {},
-                    sock
-                )
+            ].includes(innerType)
+
+            const mediaType = isMedia
+                ? innerType.replace('Message', '').toLowerCase()
+                : ''
+            const mediaObj = isMedia ? inner[innerType] : null
+
+            quoted = {
+                key: {
+                    remoteJid: from,
+                    id: ctxInfo.stanzaId,
+                    participant: ctxInfo.participant || from
+                },
+                stanzaId: ctxInfo.stanzaId,
+                participant: ctxInfo.participant || from,
+                message: activeMsg,
+                innerMessage: inner,
+                storedMessage: storedMsg,
+                rawQuotedMessage: ctxInfo.quotedMessage,
+                isViewOnce,
+                type: innerType || Object.keys(activeMsg || {})[0] || '',
+                body:
+                    inner?.conversation ||
+                    inner?.extendedTextMessage?.text ||
+                    mediaObj?.caption ||
+                    '',
+                isMedia,
+                mediaType,
+                mimetype: mediaObj?.mimetype || null,
+                download: async () => {
+                    const candidates = [storedMsg, inner, activeMsg].filter(Boolean)
+                    let lastErr = null
+                    for (const cand of candidates) {
+                        try {
+                            return await downloadMediaMessage(
+                                {
+                                    key: {
+                                        remoteJid: from,
+                                        id: ctxInfo.stanzaId,
+                                        participant: ctxInfo.participant || from
+                                    },
+                                    message: cand
+                                },
+                                'buffer',
+                                {},
+                                sock
+                            )
+                        } catch (e) {
+                            lastErr = e
+                        }
+                    }
+                    throw lastErr || new Error('Could not download media')
+                }
+            }
         }
     }
 
