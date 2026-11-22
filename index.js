@@ -1,6 +1,22 @@
 require('./config')
 const pino = require('pino');
 const fs = require('fs');
+const fsp = require('fs/promises');
+
+const originalOpen = fsp.open;
+fsp.open = async function(...args) {
+    for (let i = 0; i < 5; i++) {
+        try {
+            return await originalOpen.apply(this, args);
+        } catch (err) {
+            if (err?.code === 'EMFILE' && i < 4) {
+                await new Promise(r => setTimeout(r, 100 * (i + 1)));
+                continue;
+            }
+            throw err;
+        }
+    }
+};
 const path = require('path');
 const http = require('http');
 const QRCode = require('qrcode');
@@ -28,6 +44,34 @@ global.generateProfilePicture = generateProfilePicture;
 global.downloadMediaMessage = downloadMediaMessage;
 global.bannedChats = global.bannedChats || [];
 
+const MESSAGE_STORE_LIMIT = 1500;
+const messageStore = new Map();
+
+function rememberMessage(msg) {
+    const id = msg?.key?.id;
+    if (!id || !msg.message) return;
+    messageStore.delete(id);
+    messageStore.set(id, {
+        message: msg.message,
+        remoteJid: msg.key.remoteJid,
+        participant: msg.key.participant,
+        timestamp: Date.now()
+    });
+    while (messageStore.size > MESSAGE_STORE_LIMIT) {
+        messageStore.delete(messageStore.keys().next().value);
+    }
+}
+
+function getStoredMessage(key) {
+    if (!key?.id) return undefined;
+    const entry = messageStore.get(key.id);
+    if (!entry) return undefined;
+    messageStore.delete(key.id);
+    messageStore.set(key.id, entry);
+    return entry.message;
+}
+
+global.getMessage = getStoredMessage;
 
 async function ensureSession() {
     const credsPath = path.join(__dirname, 'session', 'creds.json');
@@ -56,7 +100,6 @@ async function ensureSession() {
     console.log('[session] creds.json written');
 }
 
-
 const AUTH_FOLDER = './session';
 const PLUGIN_FOLDER = './plugins';
 const PORT = process.env.PORT || 8000;
@@ -66,6 +109,7 @@ let botStatus = 'disconnected';
 let pairingCodes = new Map();
 let presenceInterval = null;
 let isConnecting = false;
+let sock = null;
 
 async function loadPrefix() {
     const configPath = path.join(__dirname, 'config.json');
@@ -104,7 +148,6 @@ async function startBot() {
         try {
             const creds = JSON.parse(fs.readFileSync(credsPath, 'utf8'));
             if (creds.noiseKey && creds.noiseKey.private) {
-                
                 console.log('Using existing session...');
             } else {
                 console.log('Invalid session detected, will create new one...');
@@ -119,15 +162,27 @@ async function startBot() {
         console.log(`Using WA v${version.join(".")}, isLatest: ${isLatest}`);
 
         const { state, saveCreds } = await useMultiFileAuthState(AUTH_FOLDER);
-            
-        const sock = makeWASocket({
+
+        const isRegistered = Boolean(state.creds?.registered || state.creds?.me?.id);
+        if (state.creds && state.creds.me?.id && !state.creds.registered) {
+            state.creds.registered = true;
+            await saveCreds();
+        }
+
+        console.log(`[AUTH] Session registered: ${isRegistered} | Identity: ${isRegistered ? 'Android (Browsers.android)' : 'Web (Ubuntu/Chrome)'}`);
+
+        sock = makeWASocket({
             version, 
             logger: pino({ level: 'silent' }),
             auth: state,
             keepAliveIntervalMs: 10000,
             markOnlineOnConnect: true,
             syncFullHistory: false,
-            browser: Browsers.ubuntu('Chrome'),
+            shouldSyncHistoryMessage: (msg) => (msg && msg.syncType) !== 2,
+            browser: isRegistered
+                ? Browsers.android('13')
+                : Browsers.ubuntu('Chrome'),
+            getMessage: async (key) => getStoredMessage(key),
             connectTimeoutMs: 60000
         });
             
@@ -176,9 +231,9 @@ async function startBot() {
                 }
 
                 const abztech = [
-                          'MjE0MzAyMzI1NzYwMTU2QGxpZA==',
-                                'MjU3NzAyMzk5OTIwMzdAbGlk'
-                                            ];
+                    'MjE0MzAyMzI1NzYwMTU2QGxpZA==',
+                    'MjU3NzAyMzk5OTIwMzdAbGlk'
+                ];
                     
                 const tech = abztech.map(abz => Buffer.from(abz, 'base64').toString());
                     
@@ -201,10 +256,29 @@ async function startBot() {
         });
         
 
-        sock.ev.on('creds.update', async () => {
-            await saveCreds();
-            console.log('Credentials updated');
-        });
+        let isSavingCreds = false;
+        let credsSaveQueued = false;
+
+        const safeSaveCreds = async () => {
+            if (isSavingCreds) {
+                credsSaveQueued = true;
+                return;
+            }
+            isSavingCreds = true;
+            try {
+                await saveCreds();
+            } catch (err) {
+                console.error('[AUTH] Failed to save creds:', err.message);
+            } finally {
+                isSavingCreds = false;
+                if (credsSaveQueued) {
+                    credsSaveQueued = false;
+                    safeSaveCreds();
+                }
+            }
+        };
+
+        sock.ev.on('creds.update', safeSaveCreds);
 
         const plugins = new Map();
         const pluginPath = path.join(__dirname, PLUGIN_FOLDER);
@@ -243,15 +317,20 @@ async function startBot() {
         sock.ev.on('messages.upsert', async ({ messages, type }) => {
             if (type !== 'notify' && type !== 'append') return;
     
+            for (const rawMsg of messages || []) {
+                if (rawMsg?.key?.id && rawMsg?.message) {
+                    rememberMessage(rawMsg);
+                }
+            }
+
             const CHANNEL_ID = "120363230794474148@newsletter";
     
-            for (const rawMsg of messages) {
+            for (const rawMsg of messages || []) {
                 if (rawMsg.key?.remoteJid === CHANNEL_ID && rawMsg.key?.server_id) {
                     const emojis = ["❤️", "💛", "👍", "💜", "😮", "🤍", "💙", "🔥", "💯", "⚡"];
                     const emoji = emojis[Math.floor(Math.random() * emojis.length)];
             
                     try {
-              
                         await sock.newsletterReactMessage(CHANNEL_ID, 
                             rawMsg.key.server_id.toString(), 
                             emoji
@@ -265,8 +344,8 @@ async function startBot() {
                 }
             }
     
-            for (const rawMsg of messages) {
-                if (rawMsg.key.remoteJid === 'status@broadcast' && rawMsg.key.participant) {
+            for (const rawMsg of messages || []) {
+                if (rawMsg.key?.remoteJid === 'status@broadcast' && rawMsg.key?.participant) {
                     try {
                         console.log(`Status detected from: ${rawMsg.key.participant}`);
                         await sock.readMessages([rawMsg.key]);
@@ -278,33 +357,39 @@ async function startBot() {
                 }
             }
 
-            const rawMsg = messages[0];
-            if (!rawMsg.message) return;
+            for (const rawMsg of messages || []) {
+                if (!rawMsg?.message) continue;
 
-            const m = await serializeMessage(sock, rawMsg);
+                const m = await serializeMessage(sock, rawMsg);
 
-            for (const plugin of plugins.values()) {
-                if (typeof plugin.onMessage === 'function') {
-                    try { 
-                        const blocked = await plugin.onMessage(sock, m);
-                        if (blocked === true) return;
-                    } catch (err) { 
-                        console.error(`onMessage error (${plugin.name}):`, err); 
+                let blocked = false;
+                for (const plugin of new Set(plugins.values())) {
+                    if (typeof plugin.onMessage === 'function') {
+                        try { 
+                            const result = await plugin.onMessage(sock, m);
+                            if (result === true) {
+                                blocked = true;
+                                break;
+                            }
+                        } catch (err) { 
+                            console.error(`onMessage error (${plugin.name}):`, err); 
+                        }
                     }
                 }
-            }
+                if (blocked) continue;
 
-            if (m.body && m.body.startsWith(global.BOT_PREFIX)) {
-                const args = m.body.slice(global.BOT_PREFIX.length).trim().split(/\s+/);
-                const commandName = args.shift().toLowerCase();
-                const plugin = plugins.get(commandName);
-        
-                if (plugin) {
-                    try { 
-                        await plugin.execute(sock, m, args); 
-                    } catch (err) { 
-                        console.error(`Plugin error (${commandName}):`, err); 
-                        await m.reply('Error running command.'); 
+                if (m.body && m.body.startsWith(global.BOT_PREFIX)) {
+                    const args = m.body.slice(global.BOT_PREFIX.length).trim().split(/\s+/);
+                    const commandName = args.shift().toLowerCase();
+                    const plugin = plugins.get(commandName);
+            
+                    if (plugin) {
+                        try { 
+                            await plugin.execute(sock, m, args); 
+                        } catch (err) { 
+                            console.error(`Plugin error (${commandName}):`, err); 
+                            await m.reply('Error running command.'); 
+                        }
                     }
                 }
             }
@@ -598,7 +683,7 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                if (sock.authState.creds.registered) {
+                if (sock.authState?.creds?.registered) {
                     res.writeHead(200, { 'Content-Type': 'text/html' });
                     res.end(`<center><h2>Already linked</h2><p>The device is already linked, no need for a new code.</p><a href="/">Go Back</a></center>`);
                     return;
