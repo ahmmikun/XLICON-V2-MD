@@ -21,7 +21,7 @@
   "dependencies": {
     "@hapi/boom": "^10.0.1",
     "@img/sharp-wasm32": "^0.35.4",
-    "@whiskeysockets/baileys": "^7.0.0-rc13",
+    "@whiskeysockets/baileys": "^7.0.0-rc14",
     "acrcloud": "^1.4.0",
     "axios": "^1.7.9",
     "body-parser": "*",
