@@ -229,6 +229,7 @@ async function serializeMessage(sock, msg) {
                 },
                 stanzaId: ctxInfo.stanzaId,
                 participant: ctxInfo.participant || from,
+                sender: ctxInfo.participant || from,
                 message: activeMsg,
                 innerMessage: inner,
                 storedMessage: storedMsg,
