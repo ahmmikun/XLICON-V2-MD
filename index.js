@@ -163,11 +163,7 @@ async function startBot() {
 
         const { state, saveCreds } = await useMultiFileAuthState(AUTH_FOLDER);
 
-        const isRegistered = Boolean(state.creds?.registered || state.creds?.me?.id);
-        if (state.creds && state.creds.me?.id && !state.creds.registered) {
-            state.creds.registered = true;
-            await saveCreds();
-        }
+        const isRegistered = Boolean(state.creds?.registered);
 
         console.log(`[AUTH] Session registered: ${isRegistered} | Identity: ${isRegistered ? 'Android (Browsers.android)' : 'Web (Ubuntu/Chrome)'}`);
 
@@ -190,6 +186,7 @@ async function startBot() {
             const { connection, lastDisconnect, qr } = update;
 
             if (qr) {
+                botStatus = 'connecting';
                 QRCode.toDataURL(qr, (err, url) => {
                     if (!err) {
                         latestQR = url;
@@ -223,6 +220,13 @@ async function startBot() {
             } else if (connection === 'open') {
                 botStatus = 'connected';
                 isConnecting = false;
+                latestQR = '';
+
+                if (!state.creds?.registered) {
+                    state.creds.registered = true;
+                    await saveCreds();
+                    console.log('[AUTH] Session marked as registered');
+                }
 
                 if (!global.owners) global.owners = [];
                 
@@ -481,8 +485,9 @@ const server = http.createServer((req, res) => {
             <button id="pairBtn" style="width: 100%; padding: 12px; background: #25D366; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold;">Get Pairing Code</button>
             <div id="pairingCodeDisplay" style="display: none; margin-top: 15px; padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; text-align: center;">
                 <p><strong>Pairing Code:</strong></p>
-                <p id="pairingCode" style="font-size: 24px; font-weight: bold; color: #155724;"></p>
-                <p style="font-size: 12px; color: #155724;">Enter this code in WhatsApp > Linked Devices > Link with phone number</p>
+                <p id="pairingCode" style="font-size: 26px; font-weight: bold; color: #155724; letter-spacing: 2px; user-select: all; -webkit-user-select: all; cursor: pointer;" title="Click to copy"></p>
+                <button type="button" id="copyCodeBtn" style="margin: 8px auto; padding: 8px 18px; background: #155724; color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; font-weight: bold;">Copy Code</button>
+                <p style="font-size: 12px; color: #155724; margin-top: 8px;">Enter this code in WhatsApp > Linked Devices > Link with phone number</p>
             </div>
         </div>
         <hr>
@@ -529,11 +534,36 @@ const server = http.createServer((req, res) => {
             const displayDiv = document.getElementById('pairingCodeDisplay');
             const codeSpan = document.getElementById('pairingCode');
             if (code && code !== 'null' && code !== 'undefined') {
-                codeSpan.textContent = code;
-                displayDiv.style.display = 'block';
+                if (codeSpan.textContent !== code) {
+                    codeSpan.textContent = code;
+                }
+                if (displayDiv.style.display !== 'block') {
+                    displayDiv.style.display = 'block';
+                }
             } else {
-                displayDiv.style.display = 'none';
+                if (displayDiv.style.display !== 'none') {
+                    displayDiv.style.display = 'none';
+                    codeSpan.textContent = '';
+                }
             }
+        }
+
+        function copyPairingCode() {
+            const codeSpan = document.getElementById('pairingCode');
+            const code = codeSpan.textContent.trim();
+            if (!code) return;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.getElementById('copyCodeBtn');
+                if (btn) {
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Copied!';
+                    btn.style.background = '#28a745';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = '#155724';
+                    }, 2000);
+                }
+            }).catch(() => {});
         }
 
         function updateUptime(uptime) {
@@ -613,7 +643,7 @@ const server = http.createServer((req, res) => {
                     setTimeout(() => fetchStatus(), 2000);
                     setTimeout(() => fetchStatus(), 5000);
                 } else {
-                    alert('Failed to get pairing code. Make sure bot is connecting first.');
+                    alert('Failed to get pairing code. Make sure phone number is correct (e.g. 233533763772).');
                 }
             } catch (err) {
                 alert('Error: ' + err.message);
@@ -627,6 +657,8 @@ const server = http.createServer((req, res) => {
         document.getElementById('phoneNumber').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') requestPairingCode();
         });
+        document.getElementById('copyCodeBtn').addEventListener('click', copyPairingCode);
+        document.getElementById('pairingCode').addEventListener('click', copyPairingCode);
         
         refreshInterval = setInterval(fetchStatus, 2000);
         fetchStatus();
@@ -677,15 +709,15 @@ const server = http.createServer((req, res) => {
 
                 phoneNumber = phoneNumber.replace(/\D/g, '');
                 
-                if (botStatus !== 'connecting' || !sock) {
+                if (!sock) {
                     res.writeHead(200, { 'Content-Type': 'text/html' });
-                    res.end(`<center><h2>Bot not ready</h2><p>Status: ${botStatus}</p><p>Please wait for QR code to appear first</p><a href="/">Go Back</a></center>`);
+                    res.end(`<center><h2>Bot not ready</h2><p>Please wait a moment for the bot to initialize.</p><a href="/">Go Back</a></center>`);
                     return;
                 }
 
-                if (sock.authState?.creds?.registered) {
+                if (botStatus === 'connected') {
                     res.writeHead(200, { 'Content-Type': 'text/html' });
-                    res.end(`<center><h2>Already linked</h2><p>The device is already linked, no need for a new code.</p><a href="/">Go Back</a></center>`);
+                    res.end(`<center><h2>Already linked</h2><p>The device is already connected.</p><a href="/">Go Back</a></center>`);
                     return;
                 }
 
